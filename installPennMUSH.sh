@@ -42,7 +42,7 @@ fi
 # the .tar is the file in question
 # the -C and its following parameter is our target directory
 # --strip-components=1 allows renaming of the "default" directory that the platform devs crammed in there when they tarballed it in the first place
-tar -xf pennmush-186p1rc1.tar -C "./${gameDirectory}" --strip-components=1
+tar -xf pennmush-186p1.tar -C "./${gameDirectory}" --strip-components=1
 # move our working directory into the game directory
 cd "./${gameDirectory}"
 ./configure --without-sqlite3 --without-postgresql --with-mysql="${dbConfig}"
