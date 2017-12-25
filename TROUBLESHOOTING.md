@@ -20,16 +20,17 @@ If ubu16 sticks on apt-get update while trying to connect to security.ubuntu.com
 To do that you must:
 
 ```
-     sudo nano /etc/gai.conf
-   * (or whatever your favorite/installed editor is, if not nano)
+sudo nano /etc/gai.conf
+  * (or whatever your favorite/installed editor is, if not nano)
 
 Under the line:  
-     # For sites which prefer IPv4 connections change the last line to
+  # For sites which prefer IPv4 connections change the last line to
 
 Uncomment what follows by removing its #
-  Change from:
+  From:
     # precedence ::ffff:0:0/96 100
   To:
     precedence ::ffff:0:0/96 100
 
 This script will NOT attempt to auto-correct this problem for you because it does not generate any error code and that means the script would have to run the "fix" up front and in all events, and it simply isn't needed in MOST cases.  IPv4 is already obsolete as of this writing (and frankly was at the point where they realized IPv6 was needed, in the first place).
+```
