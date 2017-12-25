@@ -58,8 +58,7 @@ export DEBIAN_FRONTEND=noninteractive
 #     precedence ::ffff:0:0/96 100
 #
 # This script will NOT attempt to auto-correct this problem for you because it does not generate any error code and that means 
-# the script would have to run the "fix" up front and in all events, and it simply isn't needed in MOST cases.  IPv4 is already  
-# obsolete as of this writing (and frankly was at the point where they realized IPv6 was needed, in the first place).
+# the script would have to run the "fix" up front and in all events, and it simply isn't needed in most cases.
 #
 
 #
