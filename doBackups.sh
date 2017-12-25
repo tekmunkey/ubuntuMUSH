@@ -36,7 +36,7 @@ fi
 
 if [[ ! -f "${compilationFile}" ]]; then
     tar -cf "${compilationFile}"
-    chmod 700 "${backupDirectory}"
+    chmod 700 "${compilationFile}"
 fi
 
 #
