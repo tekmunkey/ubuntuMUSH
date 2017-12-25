@@ -1,19 +1,27 @@
 
+#### Ignore Files
 
+**/*.epp
 **/*.lnk
-
 **/*.suo
-
-**/backupJGCS.bat
-
+**/*.bat
 **/*.pdb
+**/*.user
+**/*.vshost.*
+
+#### Allow Files
+
+## ie:  !**/some/dir/file.bat
+
+
+#### Ignore Directories
 
 **/obj
+**/Compiles
 
-**/bin/Debug/Compiles
 
-**/*.csproj.user
 
-**/*.vshost.exe
 
-**/*.vshost.exe.manifest
+#### Allow Directories
+
+## ie:  !**/some/dir
