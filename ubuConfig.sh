@@ -30,7 +30,37 @@ export SCRIPT_PID=$$ # use 'kill -s TERM $SCRIPT_PID' to pop this from anywhere 
 #
 export DEBIAN_FRONTEND=noninteractive
 
-declare mysqlRootpass="changeme" # i'm pretty sure this variable never gets used
+#
+# If at any time your machine gives you errors (typically on any sudo callout) "unable to resolve host <insert your machine name here>" 
+# then you must edit your /etc/hosts file and add your machine name after localhost
+#
+# ALWAYS MAKE DAMN SURE YOU KEEP LOCALHOST AS AN ALIAS FOR 127.0.0.1
+#
+# The tippy-top first line of your /etc/hosts file should look something like:
+# ie:  127.0.0.1 localhost myMachineName someAdditionalAlias
+#
+
+#
+# If ubu16 sticks on apt-get update while trying to connect to security.ubuntu.com, then your server has a problem connecting 
+# over IPv6.  This is an issue with your host or ISP so all you can really do is fix up your linux box.
+#
+# To do that you must:
+#     sudo nano /etc/gai.conf
+#   * (or whatever your favorite/installed editor is, if not nano)
+#
+# Under the line:  
+#     # For sites which prefer IPv4 connections change the last line to
+#
+# Uncomment what follows by removing its # (don't remove the # in THIS file - remove the # in gai.conf)
+# Change from:
+#     # precedence ::ffff:0:0/96 100
+# to:
+#     precedence ::ffff:0:0/96 100
+#
+# This script will NOT attempt to auto-correct this problem for you because it does not generate any error code and that means 
+# the script would have to run the "fix" up front and in all events, and it simply isn't needed in MOST cases.  IPv4 is already  
+# obsolete as of this writing (and frankly was at the point where they realized IPv6 was needed, in the first place).
+#
 
 #
 # Run this with sudo, never as root
@@ -103,8 +133,14 @@ sudo systemctl restart apache2
 # Finally, set any other scripts in this directory executable - assuming you didn't jump the gun and do this manually, this is a sort of "enable the next step" operation 
 # that helps alert you that it's now the appropriate time to do your MU installation
 #
-FILES=$(find ./ -name '*.sh')
-for f in ${FILES}; do
-    chmod ugo+x ${f}
-    echo "set +x for ${f}"
-done
+# These lines were commented out when it was discovered that some users (even highly experienced ones) were placing these scripts in bad locations - namely at the root of 
+# their home directories - or that they were running this script repeatedly, even AFTER unpacking/installing MUSH/MUX platforms in subdirectories.  Bad mojo, y'all.
+#
+# So only uncomment these lines before running this script if you've quite cleverly placed this script in a CONTAINED directory such as /home/myUser/MUSH and it sits 
+# alongside the other scripts that were distributed with this package, !!! AND NOTHING ELSE !!!
+#
+# FILES=$(find ./ -name '*.sh')
+# for f in ${FILES}; do
+#    chmod ugo+x ${f}
+#    echo "set +x for ${f}"
+# done
