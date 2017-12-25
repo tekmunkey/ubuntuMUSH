@@ -6,7 +6,7 @@ export SCRIPT_PID=$$ # use 'kill -s TERM $SCRIPT_PID' to pop this from anywhere 
 # You will probably need to run the following from the commandline before this script will run
 #   * Do that for THIS SCRIPT ONLY!
 #
-# chmod ugo+x your_shell_script.sh
+# chmod ug+x your_shell_script.sh
 #
 
 #
@@ -140,6 +140,6 @@ sudo systemctl restart apache2
 #
 # FILES=$(find ./ -name '*.sh')
 # for f in ${FILES}; do
-#    chmod ugo+x ${f}
+#    chmod ug+x ${f}
 #    echo "set +x for ${f}"
 # done

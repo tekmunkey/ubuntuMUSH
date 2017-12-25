@@ -1,5 +1,5 @@
 #!/bin/bash
-# chmod ugo+x your_shell_script.sh
+# chmod ug+x your_shell_script.sh
 
 
 # To compress:    tar -zcvf archive-name.tar.gz directory-name
