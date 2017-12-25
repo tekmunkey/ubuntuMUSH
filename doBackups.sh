@@ -1,5 +1,5 @@
 #!/bin/bash
-# chmod ug+x your_shell_script.sh
+# chmod ugo+x your_shell_script.sh
 
 
 # To compress:    tar -zcvf archive-name.tar.gz directory-name
@@ -31,10 +31,12 @@ declare compilationFile="./Backups.tar"
 
 if [[ ! -d "${backupDirectory}" ]]; then
     mkdir "${backupDirectory}"
+    chmod 700 "${backupDirectory}"
 fi
 
 if [[ ! -f "${compilationFile}" ]]; then
     tar -cf "${compilationFile}"
+    chmod 700 "${backupDirectory}"
 fi
 
 #
