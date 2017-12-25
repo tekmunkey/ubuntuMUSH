@@ -36,6 +36,7 @@ declare gameDirectory="myPenn-186"
 #       so I'm keeping eldritch runes and codey scripture to a minimum
 if [[ ! -d "./${gameDirectory}" ]]; then
     mkdir "./${gameDirectory}"
+    chmod 700 "./${gameDirectory}"
 fi
 
 # The next line untars our archive file
