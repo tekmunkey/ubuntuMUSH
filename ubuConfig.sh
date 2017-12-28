@@ -66,6 +66,14 @@ export DEBIAN_FRONTEND=noninteractive
 #
 # Run this BEFORE you compile or install PennMUSH 1.8.6p1rc1
 #
+
+# testing OS (not processor) architecture
+declare osArch=$(uname -p)
+if [ "${osArch##*_}" == "64" ]
+then
+    sudo dpkg --add-architecture i386
+fi
+
 sudo apt-get --assume-yes update
 sudo apt-get --assume-yes upgrade
 # if you don't have these by default, WTF?!
