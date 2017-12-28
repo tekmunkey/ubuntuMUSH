@@ -6,8 +6,12 @@ export SCRIPT_PID=$$ # use 'kill -s TERM $SCRIPT_PID' to pop this from anywhere 
 # You will probably need to run the following from the commandline before this script will run
 #   * Do that for THIS SCRIPT ONLY!
 #
-# chmod ug+x your_shell_script.sh
+# chmod 770 your_shell_script.sh
 #
+
+#####
+# HOPEFULLY THIS IS THE FIRST THING YOU DO AFTER GETTING YOUR NEWLY HOSTED SERVER ONLINE, OTHERWISE IT MAY BORK SOME SETTINGS YOU SET UP
+#####
 
 #
 # This particular script is tweaked for ubuntu 16 server.
@@ -153,6 +157,37 @@ sudo systemctl restart apache2
 #
 # FILES=$(find ./ -name '*.sh')
 # for f in ${FILES}; do
-#    chmod ug+x ${f}
+#    chmod 700 ${f}
 #    echo "set +x for ${f}"
 # done
+
+#
+# There are certain things some hosts don't do for you.  We need to be sure those things are done for you.
+#
+if [[ ! -d "/etc/skel/.ssh" ]]; then
+    sudo mkdir /etc/skel/.ssh
+    sudo chmod 700 /etc/skel/.ssh
+fi
+
+if [[ ! -f "/etc/skel/.ssh/authorized_keys" ]]; then
+    sudo touch /etc/skel/.ssh/authorized_keys
+    sudo chmod 600 /etc/skel/.ssh/authorized_keys
+fi
+
+#
+# Hopefully you were wise enough to copy the doBackups.sh script into the home directory where it belongs
+#
+sudo cp ~/doBackups.sh /etc/skel/doBackups.sh
+sudo chmod 770 /etc/skel/doBackups.sh
+#
+# If you use nano, and I use nano, then you need line and column numbering and it's just plain stupid to have to toggle it.  Ever.
+#
+if [[ ! -f "~/.nanorc" ]]; then
+    echo "set constantshow" > ~/.nanorc
+fi
+chmod 660 ~/.nanorc
+#
+# And do yourself a favor since, if you're brilliant, you're probably going to run multiple user accounts for yourself to use
+#
+sudo cp ~/.nanorc /etc/skel/.nanorc
+sudo chmod 660 /etc/skel/.nanorc

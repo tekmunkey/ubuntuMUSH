@@ -34,6 +34,11 @@ if [[ ! -d "${backupDirectory}" ]]; then
     chmod 700 "${backupDirectory}"
 fi
 
+if [[ ! -f "${compilationFile}" ]]; then
+    touch "${compilationFile}"
+    chmod 600 "${compilationFile}"
+fi
+
 #
 # It's a good idea to back up your .ssh directory.  If you store this script at ~/ (your home)
 # then you can just uncomment the next backupTargets line and it will automatically add 
@@ -68,9 +73,3 @@ for bt in "${backupTargets[@]}"; do
 done
 
 tar -uf "${compilationFile}" "${backupDirectory}"
-#
-# There once was a block of code that created an empty tar if the compilation file didn't exist, but tar errored with the message: "cowardly 
-# refusing to create empty tar" all the time, and we couldn't set the file permission adequately.  So now we just have to set the stupid 
-# permission every stinking time we make a compilation file, otherwise we can't ever successfully set the permission
-#
-chmod 600 "${compilationFile}"
