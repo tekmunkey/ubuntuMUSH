@@ -6,7 +6,7 @@ export SCRIPT_PID=$$ # use 'kill -s TERM $SCRIPT_PID' to pop this from anywhere 
 # You will probably need to run the following from the commandline before this script will run
 #   * Do that for THIS SCRIPT ONLY!
 #
-# chmod 700 your_shell_script.sh
+# chmod ug+x your_shell_script.sh
 #
 
 #
@@ -69,12 +69,12 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get --assume-yes update
 sudo apt-get --assume-yes upgrade
 # if you don't have these by default, WTF?!
-sudo apt-get --assume-yes install build-essential libc6-dev 
+sudo apt-get --assume-yes install build-essential libc6-dev lib32gcc1 lib32stdc++6 
 #
 # the next round of installs are required for SteamCMD and some specific Steam games - they will probably be handy whether 
 # you plan to host Steam games from your server or not
 #
-sudo apt-get --assume-yes install lib32gcc1 libvorbisfile3
+sudo apt-get --assume-yes install libvorbisfile3
 # these are not typically installed by default on debian, maybe on some flavors of ubuntu, but are always useful
 sudo apt-get --assume-yes install net-tools debconf-utils
 # if you're installing on a remote host and connected via SSH then, pretty obviously, you don't need the next line
@@ -145,6 +145,6 @@ sudo systemctl restart apache2
 #
 # FILES=$(find ./ -name '*.sh')
 # for f in ${FILES}; do
-#    chmod 700 ${f}
+#    chmod ug+x ${f}
 #    echo "set +x for ${f}"
 # done
