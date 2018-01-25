@@ -10,13 +10,17 @@ The documentation on this product is best viewed inside the scripts themselves, 
 
 Create a directory such as ~/MUSH
 
-Put this repo in that directory along with your pennmush-186p1.tar file.  Make sure that file is gunzipped.  Make sure it's pennmush-186p1.tar, or else go into the installPennMUSH script and change the filename on line 45 to whatever you're using.
+Put this repo in that directory along with your .tar.gz distro file(s).  Make sure whatever MUSH/MUX platforms you downloaded from github or FTP sites match the filenames in these scripts (as defined on line 34 of each script, after the = and between double quotes).  If they don't match, then change the value between the double quotes to match the filename.
 
-run:  chmod ugo+x ubuConfig.sh
+At the commandline:
+
+run:  chmod ug+x ubuConfig.sh
 
 run:  ./ubuConfig.sh
 
 The script should install all needed packages and set the other scripts +x
+
+run:  chmod ug+x ubuConfig.sh
 
 run:  ./installPennMUSH.sh
 

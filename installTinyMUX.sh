@@ -26,12 +26,12 @@ declare dbLib="$(${dbConfig} --variable=pkglibdir)"
 #
 #   Only change the part inside quotation marks :-)
 #
-declare gameDirectory="myPenn-186"
+declare gameDirectory="tinymux210"
 #
 # Change the following value to the filename of whatever package you downloaded.  This value is whatever immediately precedes the 
-# .tar.gz in what you downloaded from Penn's github.
+# .tar.gz in what you downloaded from the public/anonymous FTP Server at tinymux.org
 #
-declare packageName="pennmush-186p1"
+declare packageName="mux-2.10.1.14.unix"
 
 # The if statement is needed to ensure that the directory exists
 # yes, Comic Book Guy, I could mkdir -p && tar -xf on one line below, but:
@@ -44,7 +44,7 @@ if [[ ! -d "./${gameDirectory}" ]]; then
     chmod 700 "./${gameDirectory}"
 fi
 
-# I assume that you downloaded the PennMUSH 1.8.6 patchlevel 1 archive from github
+# I assume that you downloaded the TinyMUX 2.10.1.14 archive from the tinymux.org public/anonymous ftp server
 gunzip "./${packageName}.tar.gz"
 # The next line untars our archive file
 # the .tar is the file in question
@@ -52,9 +52,16 @@ gunzip "./${packageName}.tar.gz"
 # --strip-components=1 allows renaming of the "default" directory that the platform devs crammed in there when they tarballed it in the first place
 tar -xf "./${packageName}.tar" -C "./${gameDirectory}" --strip-components=1
 # move our working directory into the game directory
-cd "./${gameDirectory}"
-./configure --without-sqlite3 --without-postgresql --with-mysql="${dbConfig}"
-make update
-make install
+cd "./${gameDirectory}/src"
+#
+# Install TinyMUX with
+#   * Reality Levels, WoD Realms, Inline AND Async SQL Enabled
+#
+./configure --enable-realitylvls --enable-wodrealms --enable-inlinesql --enable-stubslave --with-mysql-include="${dbInc}" --with-mysql-libs="${dbLib}"
+make depend
+make
+cd ./modules
+./configure
+make
 # return to where this script resides
-cd ../
+cd ../../..
