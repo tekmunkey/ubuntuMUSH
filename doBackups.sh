@@ -61,12 +61,18 @@ for bt in "${backupTargets[@]}"; do
     # This is a full chronoligical backup of the directory on that particular date
     #
     declare archFile="${backupDirectory}"/"$(date +%Y%m%d-%H%M).${bt##*/}.tar.gz"
+    if [[ ! -f "${archFile}" ]]; then
+        touch "${archFile}"
+        chmod 600 "${archFile}"
+    fi
     tar -zcf "${archFile}" "${bt}"
     #
     # archComp is a compilation of all the archives for that particular directory, provided for a quick and easy offsite dump at a later time
     #
     declare archComp="${backupDirectory}"/"compilation-${bt##*/}.tar"
     if [[ ! -f "${archComp}" ]]; then
+        touch "${archComp}"
+        chmod 600 "${archComp}"
         tar -cf "${archComp}"
     fi
     tar -uf "${archComp}" "${archFile}"    

@@ -68,7 +68,7 @@ export DEBIAN_FRONTEND=noninteractive
 #
 # Run this with sudo, never as root
 #
-# Run this BEFORE you compile or install PennMUSH 1.8.6p1rc1
+# Run this BEFORE you compile or install any MUSH/MUX platform
 #
 
 # testing OS (not processor) architecture
@@ -87,27 +87,54 @@ sudo apt-get --assume-yes install build-essential libc6-dev lib32gcc1 lib32stdc+
 # you plan to host Steam games from your server or not
 #
 sudo apt-get --assume-yes install libvorbisfile3
+#
 # these are not typically installed by default on debian, maybe on some flavors of ubuntu, but are always useful
+#
 sudo apt-get --assume-yes install net-tools debconf-utils
+#
 # if you're installing on a remote host and connected via SSH then, pretty obviously, you don't need the next line
 # so you can safely comment it out.  you actively WANT to comment it out if you're using an SSH server other than openSSH,
 # unless you want to install openSSH and remove whatever default you have installed
 # if you're running debian or ubuntu then openssh is your default and the next line shouldn't hurt in either event
+#
 sudo apt-get --assume-yes install openssh-server openssh-client
+#
 # You need these for PennMUSH
+#
 sudo apt-get --assume-yes install openssl libssl-dev
+#
 # You need these for PennMUSH
+#
 sudo apt-get --assume-yes install libpcre3 libpcre3-dev libevent-dev
-# You want sendmail for website fu
-sudo apt-get --assume-yes install sendmail
+#
+# Install email services
+#   * You want sendmail for website fu - a LOT of pre-chewed website garbage you'll want to download and puke up on people uses it
+#   * postfix is a dropin replacement for sendmail.  A LOT of discerning (smart, handsome, charming, talented) people prefer it over sendmail
+#     for lots of reasons
+#   * both postfix and sendmail are SMTP which is for MAIL-SENDING ONLY
+#   * dovecot is for POP-3/IMAP which is for MAIL-RECEIVING
+#
+sudo apt-get --assume-yes install sendmail postfix postfix-mysql dovecot-core dovecot-imapd dovecot-lmtpd dovecot-mysql
+    # When Postfix configuration is prompted choose Internet Site:
+    # Postfix configuration will ask about System mail name – you could use your FDQN or main domain.
+#
 # You want python with these addons at a bare minimum
+#
 sudo apt-get --assume-yes install python python-pip virtualenv
+#
 # You want apache with these addons at a bare minimum
+#
 sudo apt-get --assume-yes install apache2 libapache2-mod-python
+#
 # You want git
+#
 sudo apt-get --assume-yes install git
-# does mysql server need to be installed before the clients?  i suspect not
+#
+# You'll want all the mysql libs to go along with these packages
+#   * libmysqlclient-dev is default-libmysqlclient-dev under debian 9
+#
 sudo apt-get --assume-yes install mysql-client libmysqlclient-dev python-mysqldb php7.0 php-pear php7.0-mysql
+
 #
 # Apache2 config
 #
