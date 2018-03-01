@@ -58,7 +58,7 @@ fi
 for bt in "${backupTargets[@]}"; do
     #
     # archFile is a timestamp followed by the directory name only of the entry from backupTargets that we're about to archive
-    # This is a full chronoligical backup of the directory on that particular date
+    # This is a full chronological backup of the directory on that particular date
     #
     declare archFile="${backupDirectory}"/"$(date +%Y%m%d-%H%M).${bt##*/}.tar.gz"
     if [[ ! -f "${archFile}" ]]; then

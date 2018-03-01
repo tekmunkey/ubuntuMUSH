@@ -90,7 +90,7 @@ sudo apt-get --assume-yes install libvorbisfile3
 #
 # these are not typically installed by default on debian, maybe on some flavors of ubuntu, but are always useful
 #
-sudo apt-get --assume-yes install net-tools debconf-utils
+sudo apt-get --assume-yes install net-tools debconf-utils whois dig nmap inetutils-traceroute unzip
 #
 # if you're installing on a remote host and connected via SSH then, pretty obviously, you don't need the next line
 # so you can safely comment it out.  you actively WANT to comment it out if you're using an SSH server other than openSSH,
@@ -120,7 +120,12 @@ sudo apt-get --assume-yes install sendmail postfix postfix-mysql dovecot-core do
 #
 # You want python with these addons at a bare minimum
 #
-sudo apt-get --assume-yes install python python-pip virtualenv
+sudo apt-get --assume-yes install python python-pip virtualenv 
+#
+# You want to be able to convert things to PDF on the server-side
+#
+pip install pdfkit
+sudo apt-get --assume-yes install wkhtmltopdf
 #
 # You want apache with these addons at a bare minimum
 #
@@ -140,6 +145,7 @@ sudo apt-get --assume-yes install mysql-client libmysqlclient-dev python-mysqldb
 #
 sudo a2dismod mpm_event
 sudo a2enmod mpm_prefork
+sudo a2enmod ssl     # enable ssl security mod
 sudo a2enmod headers # enable headers mod
 sudo a2enmod rewrite # enable rewrite mod
 sudo a2enmod cgi # enable cgi mod
