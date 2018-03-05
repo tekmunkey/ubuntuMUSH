@@ -122,6 +122,10 @@ sudo apt-get --assume-yes install sendmail postfix postfix-mysql dovecot-core do
 #
 sudo apt-get --assume-yes install python python-pip virtualenv 
 #
+# Upgrade pip
+#
+pip install --upgrade pip
+#
 # You want to be able to convert things to PDF on the server-side
 #
 pip install pdfkit
