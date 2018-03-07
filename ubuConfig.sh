@@ -124,11 +124,11 @@ sudo apt-get --assume-yes install python python-pip virtualenv
 #
 # Upgrade pip
 #
-pip install --upgrade pip
+sudo -H pip install --upgrade pip
 #
 # You want to be able to convert things to PDF on the server-side
 #
-pip install pdfkit
+sudo -H pip install pdfkit
 sudo apt-get --assume-yes install wkhtmltopdf
 #
 # You want apache with these addons at a bare minimum
