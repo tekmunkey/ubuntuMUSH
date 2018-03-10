@@ -12,6 +12,12 @@
 
 * Added some /etc/skel mods to the script, including a by-default .ssh folder and a copy of the doBackups script for all newly created profiles 
 
-#2018-01-25
+# 2018-01-25
 
 * Added installTinyMUX.sh to automate TinyMUX installation for Ubuntu systems with all the really useful options enabled
+
+# 2018-03-10
+
+* Converted MySQL/MariaDB installation to fully automated via debconf and CLI parameters.  User may pass -mrp=YourMySQLRootPassword or --mySQLRootPassword=YourMySQLRootPassword from the commandline to set up a custom root password for MySQL at runtime.  The default value is 'mysqlRoot' - the script will inform the user of exactly what the MySQL Root Password is when complete.
+
+* Replaced mysql_secure_installation with bash/expect routines into the mysql CLI client, sending the relevant queries.  This eliminates automation-breaking user prompts.

@@ -71,6 +71,53 @@ export DEBIAN_FRONTEND=noninteractive
 # Run this BEFORE you compile or install any MUSH/MUX platform
 #
 
+#
+# The mysqlRootPass value will be injected into the MySQL/MariaDB installation at runtime.
+#
+# To set this value when invoking the script from commandline, call:
+#   scriptName.sh -mrp=YourPass
+#     OR
+#   scriptName.sh --mysqlrootpass=YourPass
+#
+declare mysqlRootPass="mysqlRoot"
+#
+# Process the CLI Parameters
+#
+for cliParam in "$@"; do
+    #
+    # $(cliParam,,) syntax converts the variable value to all lowercase
+    # $(cliParam^^) syntax converts the variable value to all uppercase
+    #
+    #   * In this fashion parameter matching is case-insensitive
+    #
+    case ${cliParam,,} in
+        -mrp=*|--mysqlrootpass=*)
+            #
+            # Need to pick parameter apart using string match specifications in your consuming function.
+            #  ** Bash' native string matching/manipulation functions are quite simple:
+            #      # removes the shortest match from the beginning of a string
+            #      ## removes the longest match from the beginning
+            #      % removes the shortest match from the end of a string
+            #      %% removes the longest match from the end
+            #  ***  As of 2017-08-27, https://spin.atomicobject.com/2014/02/16/bash-string-maniuplation/
+            #       had some great information on Bash-native string manipulation
+            #
+            mysqlRootPass="${cliParam#*=}"
+            shift 1
+        ;;
+        *)
+            #
+            # Default case is when the CLI parameter matches no defined script parameters.
+            #
+            # Shift CLI Parameters array left by 1 to eliminate this value
+            #
+            shift 1
+            echo "Invalid command line parameter:  ${cliParam%%=*}"
+            exit 1
+        ;;
+    esac
+done
+
 # testing OS (not processor) architecture
 declare osArch=$(uname -p)
 if [ "${osArch##*_}" == "64" ]
@@ -90,7 +137,7 @@ sudo apt-get --assume-yes install libvorbisfile3
 #
 # these are not typically installed by default on debian, maybe on some flavors of ubuntu, but are always useful
 #
-sudo apt-get --assume-yes install net-tools debconf-utils whois dig nmap inetutils-traceroute unzip
+sudo apt-get --assume-yes install net-tools debconf-utils whois dig nmap inetutils-traceroute unzip expect
 #
 # if you're installing on a remote host and connected via SSH then, pretty obviously, you don't need the next line
 # so you can safely comment it out.  you actively WANT to comment it out if you're using an SSH server other than openSSH,
@@ -133,7 +180,11 @@ sudo apt-get --assume-yes install wkhtmltopdf
 #
 # You want apache with these addons at a bare minimum
 #
-sudo apt-get --assume-yes install apache2 libapache2-mod-python
+sudo apt-get --assume-yes install apache2 libapache2-mod-python libapache2-mod-php
+#
+# You want php with these addons at a bare minimum
+#
+sudo apt-get --assume-yes install php7.0 php-pear php-xml php-mbstring
 #
 # You want git
 #
@@ -142,7 +193,7 @@ sudo apt-get --assume-yes install git
 # You'll want all the mysql libs to go along with these packages
 #   * libmysqlclient-dev is default-libmysqlclient-dev under debian 9
 #
-sudo apt-get --assume-yes install mysql-client libmysqlclient-dev python-mysqldb php7.0 php-pear php7.0-mysql
+sudo apt-get --assume-yes install mysql-client libmysqlclient-dev python-mysqldb php7.0-mysql
 
 #
 # Apache2 config
@@ -154,10 +205,23 @@ sudo a2enmod headers # enable headers mod
 sudo a2enmod rewrite # enable rewrite mod
 sudo a2enmod cgi # enable cgi mod
 sudo a2enmod python
+sudo a2enmod php7.0
+#
+# PHP config
+#
+sudo phpenmod mbstring
+sudo phpenmod xml
 
+#
+# Set up MySQL Server Password
+#
+debconf-set-selections <<< 'mariadb-server-5.5 mysql-server/root_password password ${mysqlRootPass}'
+debconf-set-selections <<< 'mariadb-server-5.5 mysql-server/root_password_again password ${mysqlRootPass}'
 # the next 2 lines will interrupt the hands-off installation process, prompting the user
 # for a MySQL root password (twice) and then several more times
 sudo apt-get --assume-yes install mysql-server
+
+
 #
 # script writer's recommendations for mysql_secure_installation's prompt answers:
 #   First (obviously) enter your root password from when you installed mysql server
@@ -172,8 +236,61 @@ sudo apt-get --assume-yes install mysql-server
 #   press Y to DO reload privilege tables and therefore make your changes effective as of now
 #   * I'm pretty sure there's no platform where keystroke alone invokes the option - it's always Y or N followed by ENTER
 #
-mysql_secure_installation
+# mysql_secure_installation
 
+#
+# Perform mysql_secure_installation equivalencies
+#
+expect -c "
+
+set timeout 10
+spawn mysql --user="root" -p
+
+expect \"Enter password: \"
+send \"${mysqlRootPass}\r\"
+
+expect \"mysql> \"
+send {\! echo '\033[1m\nEnabling Warning Display\n\033[0m';}
+send \"\r\"
+send {\W}
+send \"\r\"
+
+send {\! echo '\033[1m\nRemoving root access from anywhere but localhost\n\033[0m';}
+send \"\r\"
+expect \"mysql> \"
+send \"DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');\r\"
+
+send {\! echo '\033[1m\nDeleting anonymous user(s)\n\033[0m';}
+send \"\r\"
+expect \"mysql> \"
+send \"DELETE FROM mysql.user WHERE User='';\r\"
+
+send {\! echo '\033[1m\nRemoving test/sample database\n\033[0m';}
+send \"\r\"
+expect \"mysql> \"
+send \"DROP DATABASE IF EXISTS test;\r\"
+
+send {\! echo '\033[1m\nRemoving access to test/sample database\n\033[0m';}
+send \"\r\"
+expect \"mysql> \"
+send \"DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';\r\"
+
+send {\! echo '\033[1m\nUpdating privilege tables\n\033[0m';}
+send \"\r\"
+expect \"mysql> \"
+send \"FLUSH PRIVILEGES;\r\"
+
+send {\! echo '\033[1m\nDone with MySQL - exiting CLI client\n\033[0m';}
+send \"\r\"
+expect \"mysql> \"
+send \"quit\r\"
+
+expect eof
+"
+
+#
+# Create directory for PHP logs
+#
 if [[ ! -d "/var/log/php" ]]; then
     sudo mkdir /var/log/php
     sudo chown www-data /var/log/php
@@ -183,7 +300,7 @@ fi
 sudo systemctl restart apache2
 
 #
-# Finally, set any other scripts in this directory executable - assuming you didn't jump the gun and do this manually, this is a sort of "enable the next step" operation 
+# Set any other scripts in this directory executable - assuming you didn't jump the gun and do this manually, this is a sort of "enable the next step" operation 
 # that helps alert you that it's now the appropriate time to do your MU installation
 #
 # These lines were commented out when it was discovered that some users (even highly experienced ones) were placing these scripts in bad locations - namely at the root of 
@@ -228,3 +345,8 @@ chmod 660 ~/.nanorc
 #
 sudo cp ~/.nanorc /etc/skel/.nanorc
 sudo chmod 660 /etc/skel/.nanorc
+
+echo ""
+echo -e "\033[1m${BASH_SOURCE[0]##*/} Finished!\033[0m"
+echo -e "\033[1m    Your MySQL/MariaDB root password is:  ${mysqlRootPass}\033[0m"
+echo ""
