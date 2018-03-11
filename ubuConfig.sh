@@ -77,9 +77,18 @@ export DEBIAN_FRONTEND=noninteractive
 # To set this value when invoking the script from commandline, call:
 #   scriptName.sh -mrp=YourPass
 #     OR
-#   scriptName.sh --mysqlrootpass=YourPass
+#   scriptName.sh --mysqlRootPass=YourPass
 #
 declare mysqlRootPass="mysqlRoot"
+#
+# The mediaWikiPass value will be injected into the MediaWiki installation at runtime.
+# 
+# To set this value when invoking the script from commandline, call:
+#   scriptName.sh -mwp=YourPass
+#     OR
+#   scriptname.sh --mediaWikiPass=YourPass
+#
+declare mediaWikiPass="mwikiRoot"
 #
 # Process the CLI Parameters
 #
@@ -103,6 +112,10 @@ for cliParam in "$@"; do
             #       had some great information on Bash-native string manipulation
             #
             mysqlRootPass="${cliParam#*=}"
+            shift 1
+        ;;
+        -mwp=*|--mediawikipass=*)
+            mediaWikiPass="${cliParam#*=}"
             shift 1
         ;;
         *)
@@ -137,7 +150,7 @@ sudo apt-get --assume-yes install libvorbisfile3
 #
 # these are not typically installed by default on debian, maybe on some flavors of ubuntu, but are always useful
 #
-sudo apt-get --assume-yes install net-tools debconf-utils whois dig nmap inetutils-traceroute unzip expect
+sudo apt-get --assume-yes install net-tools debconf-utils whois dig nmap inetutils-traceroute unzip expect curl
 #
 # if you're installing on a remote host and connected via SSH then, pretty obviously, you don't need the next line
 # so you can safely comment it out.  you actively WANT to comment it out if you're using an SSH server other than openSSH,
@@ -184,7 +197,7 @@ sudo apt-get --assume-yes install apache2 libapache2-mod-python libapache2-mod-p
 #
 # You want php with these addons at a bare minimum
 #
-sudo apt-get --assume-yes install php7.0 php-pear php-xml php-mbstring
+sudo apt-get --assume-yes install php7.0 php-pear php7.0-mysql php7.0-curl php-xml
 #
 # You want git
 #
@@ -193,7 +206,7 @@ sudo apt-get --assume-yes install git
 # You'll want all the mysql libs to go along with these packages
 #   * libmysqlclient-dev is default-libmysqlclient-dev under debian 9
 #
-sudo apt-get --assume-yes install mysql-client libmysqlclient-dev python-mysqldb php7.0-mysql
+sudo apt-get --assume-yes install mysql-client libmysqlclient-dev python-mysqldb 
 
 #
 # Apache2 config
@@ -238,55 +251,34 @@ sudo apt-get --assume-yes install mysql-server
 #
 # mysql_secure_installation
 
-#
-# Perform mysql_secure_installation equivalencies
-#
-expect -c "
+function doMySQLQuery
+{
+    expect -c "
+    
+    set timeout 10
+    spawn mysql --user="root" -p -e \"$1\"
 
-set timeout 10
-spawn mysql --user="root" -p
+    expect \"Enter password: \"
+    send \"${mysqlRootPass}\r\"
 
-expect \"Enter password: \"
-send \"${mysqlRootPass}\r\"
+    expect eof
+    "
+}
 
-expect \"mysql> \"
-send {\! echo '\033[1m\nEnabling Warning Display\n\033[0m';}
-send \"\r\"
-send {\W}
-send \"\r\"
+echo -e '\033[1m\nRemoving root access from anywhere but localhost\n\033[0m'
+doMySQLQuery "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
 
-send {\! echo '\033[1m\nRemoving root access from anywhere but localhost\n\033[0m';}
-send \"\r\"
-expect \"mysql> \"
-send \"DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');\r\"
+echo -e '\033[1m\nDeleting anonymous user(s)\n\033[0m'
+doMySQLQuery "DELETE FROM mysql.user WHERE User='';"
 
-send {\! echo '\033[1m\nDeleting anonymous user(s)\n\033[0m';}
-send \"\r\"
-expect \"mysql> \"
-send \"DELETE FROM mysql.user WHERE User='';\r\"
+echo -e '\033[1m\nRemoving test/sample database\n\033[0m'
+doMySQLQuery "DROP DATABASE IF EXISTS test;"
 
-send {\! echo '\033[1m\nRemoving test/sample database\n\033[0m';}
-send \"\r\"
-expect \"mysql> \"
-send \"DROP DATABASE IF EXISTS test;\r\"
+echo -e '\033[1m\nRemoving access to test/sample database\n\033[0m'
+doMySQLQuery "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';"
 
-send {\! echo '\033[1m\nRemoving access to test/sample database\n\033[0m';}
-send \"\r\"
-expect \"mysql> \"
-send \"DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';\r\"
-
-send {\! echo '\033[1m\nUpdating privilege tables\n\033[0m';}
-send \"\r\"
-expect \"mysql> \"
-send \"FLUSH PRIVILEGES;\r\"
-
-send {\! echo '\033[1m\nDone with MySQL - exiting CLI client\n\033[0m';}
-send \"\r\"
-expect \"mysql> \"
-send \"quit\r\"
-
-expect eof
-"
+echo -e '\033[1m\nUpdating privilege tables\n\033[0m'
+doMySQLQuery "FLUSH PRIVILEGES;"
 
 #
 # Create directory for PHP logs
@@ -295,6 +287,46 @@ if [[ ! -d "/var/log/php" ]]; then
     sudo mkdir /var/log/php
     sudo chown www-data /var/log/php
 fi
+
+#
+# These packages are required by MediaWiki
+#
+sudo apt-get --assume-yes install imagemagick php7.0-intl php7.0-gd php7.0-mbstring php-apcu
+#
+# This var contains a target URL for the current (or desired) release of mediawiki
+#
+declare mediaWikiURL="https://releases.wikimedia.org/mediawiki/1.30/mediawiki-1.30.0.tar.gz"
+#
+# The path to the local directory you intend to serve your MediaWiki site/content from
+#
+declare localWebSiteDir="/var/www/html/mediawiki"
+if [[ ! -d "${localWebSiteDir}" ]]; then
+    mkdir -p "${localWebSiteDir}"
+    #
+    # set website directory to RWX (OWNER) RX (GROUP) RX (OTHER)
+    #
+    chmod 755 "${localWebSiteDir}"
+fi
+#
+# Download the target file to /opt/filename
+#
+sudo wget ${mediaWikiURL} --directory-prefix=/opt/
+#
+# Untar the target file into the website directory
+#
+sudo tar -xvzf /opt/${mediaWikiURL##*/} -C ${localWebSiteDir} --strip-components=1
+#
+# Set directory ownership for the mediawiki directory - don't ever modify this unless Apache decides to change its user/group from www-data
+#
+sudo chown www-data:www-data -R ${localWebSiteDir}
+#
+# Create databases for mediawiki
+#
+doMySQLQuery "SET GLOBAL sql_mode=''"
+doMySQLQuery "CREATE DATABASE IF NOT EXISTS wikidb;"
+doMySQLQuery "CREATE USER IF NOT EXISTS 'wikiuser'@'localhost' IDENTIFIED BY '${mediaWikiPass}';"
+doMySQLQuery "GRANT ALL PRIVILEGES ON wikidb.* TO 'wikiuser'@'localhost';"
+doMySQLQuery "FLUSH PRIVILEGES;"
 
 # restart apache2
 sudo systemctl restart apache2
@@ -349,4 +381,5 @@ sudo chmod 660 /etc/skel/.nanorc
 echo ""
 echo -e "\033[1m${BASH_SOURCE[0]##*/} Finished!\033[0m"
 echo -e "\033[1m    Your MySQL/MariaDB root password is:  ${mysqlRootPass}\033[0m"
+echo -e "\033[1m    Your MediaWiki username is wikiuser and the MediaWiki password is:  ${mediaWikiPass}\033[0m"
 echo ""

@@ -41,7 +41,7 @@ declare packageName="mux-2.10.1.14.unix"
 #       so I'm keeping eldritch runes and codey scripture to a minimum
 if [[ ! -d "./${gameDirectory}" ]]; then
     mkdir "./${gameDirectory}"
-    chmod 700 "./${gameDirectory}"
+    chmod 770 "./${gameDirectory}"
 fi
 
 # I assume that you downloaded the TinyMUX 2.10.1.14 archive from the tinymux.org public/anonymous ftp server

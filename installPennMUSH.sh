@@ -41,7 +41,7 @@ declare packageName="pennmush-186p1"
 #       so I'm keeping eldritch runes and codey scripture to a minimum
 if [[ ! -d "./${gameDirectory}" ]]; then
     mkdir "./${gameDirectory}"
-    chmod 700 "./${gameDirectory}"
+    chmod 770 "./${gameDirectory}"
 fi
 
 # I assume that you downloaded the PennMUSH 1.8.6 patchlevel 1 archive from github

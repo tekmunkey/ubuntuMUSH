@@ -21,3 +21,5 @@
 * Converted MySQL/MariaDB installation to fully automated via debconf and CLI parameters.  User may pass -mrp=YourMySQLRootPassword or --mySQLRootPassword=YourMySQLRootPassword from the commandline to set up a custom root password for MySQL at runtime.  The default value is 'mysqlRoot' - the script will inform the user of exactly what the MySQL Root Password is when complete.
 
 * Replaced mysql_secure_installation with bash/expect routines into the mysql CLI client, sending the relevant queries.  This eliminates automation-breaking user prompts.
+
+* Added MediaWiki v1.30.0 installation w/prerequisites.  Verified functional.  After the script runs users should be able to browse to http://Server.IP.Address.Here/mediawiki 
