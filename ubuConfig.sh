@@ -72,6 +72,50 @@ export DEBIAN_FRONTEND=noninteractive
 #
 
 #
+# This function generates a random password between $1 and $2 characters in length
+#
+function randPass
+{
+    #
+    ## $1 must be the minimum number of characters requested
+    ## $2 must be the maximum number of characters requested
+    #
+
+    local -i minLength=8
+    ## Validate that $1 is not null and is a number and is > 4 (an oldschool minimum password length)
+    if [[ ! -z "${1}" ]] && [[ "${1}" =~ '^[0-9]+$' ]] && [ "${1}" -gt 4 ]; then
+        minLength=${1}
+    fi
+
+    local -i maxLength=12
+    #
+    ## Validate that $2 is not null and is a number and is > 4 (an oldschool minimum password length)
+    #
+    if [[ ! -z "${2}" ]] && [[ "${2}" =~ '^[0-9]+$' ]] && [ "${2}" -gt 4 ]; then
+        maxLength=${2}
+    fi
+
+    #
+    ## Ensuring that minlength isn't > maxLength - if it is then reverse them
+    ##   * DO NOT TRY TO PUT THIS ABOVE, INTO THE VALUE VALIDATIONS... IF ANY VALUE VALIDATION FAILS THEN EITHER MIN OR MAX LENGTH MAY BE DEFAULTED
+    ##     THIS METHOD ABSOLUTELY ENSURES THAT randPass WILL ALWAYS RETURN A LEGITIMATELY RANDOM-LENGTH AND RANDOM-CHARS PASSWORD, EVEN IF IT THROWS OUT INVALID PARAMETERS
+    #
+    if [ "${minLength}" -gt "${maxLength}" ]; then
+        local -i minBak=${minLength}
+        minLength=${maxLength}
+        maxLength=${minBak}
+    fi
+    
+    #
+    ## Get a random number between minLength and maxLength and that is the actual password length for output
+    #
+    local -i passLength=$(shuf --input-range="${minLength}-${maxLength}" --head-count=1)
+
+    echo $(< /dev/urandom tr -dc '!@#$%^&*=+<>:_A-Z-a-z-0-9' | head --bytes="${passLength}";echo;)
+}
+
+
+#
 # The mysqlRootPass value will be injected into the MySQL/MariaDB installation at runtime.
 #
 # To set this value when invoking the script from commandline, call:
@@ -81,6 +125,44 @@ export DEBIAN_FRONTEND=noninteractive
 #
 declare mysqlRootPass="mysqlRoot"
 #
+# Comment out the next line if you want a simplified mysqlRoot password - both this and the initial/simple value above may be overridden with the CLI arguments
+#
+mysqlRootPass=$(randPass 12 16)
+
+#
+# The muDBSchema value will be injected into SQL queries at runtime to create a database schema for your MU
+#
+# To set this value when invoking the script from commandline, call:
+#   scriptName.sh -mus=YourSchemaName
+#     OR
+#   scriptName.sh --muDBSchema=SchemaName
+#
+declare muDBSchema="muDB"
+#
+# The muDBUser value will be injected into a newly created user with full access to muDBSchema at runtime
+#
+# To set this value when invoking the script from commandline, call:
+#   scriptName.sh -muu=UserNameFormuDBSchema
+#     OR
+#   scriptName.sh -muDBUser=UserNameFormuDBSchema
+#
+declare muDBUser="muDBUser"
+#
+# The muDBPass value will be injected into the newly created MySQL muDBUser as its password
+#
+# To set this value when invoking the script from commandline, call:
+#   scriptName.sh -mup=PasswordForMUDBUser
+#     OR
+#   scriptName.sh --muDBPass=PasswordForMUDBUser
+#
+#
+declare muDBPass="muDBPass"
+#
+# Comment out the next line if you want a simplified muDBUser password - both this and the initial/simple value above may be overridden with the CLI arguments
+#
+muDBPass=$(randPass 12 16)
+
+#
 # The mediaWikiPass value will be injected into the MediaWiki installation at runtime.
 # 
 # To set this value when invoking the script from commandline, call:
@@ -89,6 +171,10 @@ declare mysqlRootPass="mysqlRoot"
 #   scriptname.sh --mediaWikiPass=YourPass
 #
 declare mediaWikiPass="mwikiRoot"
+#
+# Comment out the next line if you want a simplified Media Wiki Admin password - both this and the initial/simple value above may be overridden with the CLI arguments
+#
+mediaWikiPass=$(randPass 12 16)
 #
 # Process the CLI Parameters
 #
@@ -112,6 +198,18 @@ for cliParam in "$@"; do
             #       had some great information on Bash-native string manipulation
             #
             mysqlRootPass="${cliParam#*=}"
+            shift 1
+        ;;
+        -mus=*|--mudbschema=*)
+            muDBSchema="${cliParam#*=}"
+            shift 1
+        ;;
+        -muu=*|--mudbuser=*)
+            muDBUser="${cliParam#*=}"
+            shift 1
+        ;;
+        -mup=*|--mudbpass=*)
+            muDBPass="${cliParam#*=}"
             shift 1
         ;;
         -mwp=*|--mediawikipass=*)
@@ -289,6 +387,15 @@ if [[ ! -d "/var/log/php" ]]; then
 fi
 
 #
+# Create the MU's MySQL Database
+#
+doMySQLQuery "CREATE DATABASE IF NOT EXISTS ${muDBSchema};"
+doMySQLQuery "DROP USER IF EXISTS '${muDBUser}'@'localhost';"
+doMySQLQuery "CREATE USER IF NOT EXISTS '${muDBUser}'@'localhost' IDENTIFIED BY '${muDBPass}';"
+doMySQLQuery "GRANT ALL PRIVILEGES ON `${muDBSchema}`.* TO '${muDBUser}'@'localhost';"
+doMySQLQuery "FLUSH PRIVILEGES;"
+
+#
 # These packages are required by MediaWiki
 #
 sudo apt-get --assume-yes install imagemagick php7.0-intl php7.0-gd php7.0-mbstring php-apcu
@@ -324,6 +431,7 @@ sudo chown www-data:www-data -R ${localWebSiteDir}
 #
 doMySQLQuery "SET GLOBAL sql_mode=''"
 doMySQLQuery "CREATE DATABASE IF NOT EXISTS wikidb;"
+doMySQLQuery "DROP USER IF EXISTS 'wikiuser'@'localhost';"
 doMySQLQuery "CREATE USER IF NOT EXISTS 'wikiuser'@'localhost' IDENTIFIED BY '${mediaWikiPass}';"
 doMySQLQuery "GRANT ALL PRIVILEGES ON wikidb.* TO 'wikiuser'@'localhost';"
 doMySQLQuery "FLUSH PRIVILEGES;"
@@ -381,5 +489,10 @@ sudo chmod 660 /etc/skel/.nanorc
 echo ""
 echo -e "\033[1m${BASH_SOURCE[0]##*/} Finished!\033[0m"
 echo -e "\033[1m    Your MySQL/MariaDB root password is:  ${mysqlRootPass}\033[0m"
+echo ""
+echo -e "\033[1m    Your MU's DB Schema is:  ${muDBSchema}\033[0m"
+echo -e "\033[1m    Your MU's DB User is:  ${muDBUser}\033[0m"
+echo -e "\033[1m    Your MU's DB Password is:  ${muDBPass}\033[0m"
+echo ""
 echo -e "\033[1m    Your MediaWiki username is wikiuser and the MediaWiki password is:  ${mediaWikiPass}\033[0m"
 echo ""
