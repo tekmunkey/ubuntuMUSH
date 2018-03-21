@@ -29,3 +29,9 @@
 * Added muDBSchema, muDBUser, and muDBPass variables and corresponding CLI parameters for -mus=SchemaName, -muu=UserName, -mup=UserPassword which creates a MySQL Database and sets up a privileged User with the specified password.  The script will inform the user of exactly what these values are (Schema, Username, Password) when complete.
 
 * Added randPass() function to script, which allows better/more secure default password values.  Default passwords for MySQL Root, MU DB User, and MediaWiki Admin are now randomly generated for each script run.  Values may still be overridden by CLI Parameters and the old (simplified) passwords are still there - you can always comment out the single line values that call on the randPass generator to keep the simple default passwords.
+
+# 2018-03-21
+
+* Added iptables/UFW install/configuration
+
+* Fixed problem with getRandPass function

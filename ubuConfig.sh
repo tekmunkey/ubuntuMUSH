@@ -74,7 +74,7 @@ export DEBIAN_FRONTEND=noninteractive
 #
 # This function generates a random password between $1 and $2 characters in length
 #
-function randPass
+function getRandPass
 {
     #
     ## $1 must be the minimum number of characters requested
@@ -82,8 +82,12 @@ function randPass
     #
 
     local -i minLength=8
+    #
+    # When referencing this value in code, DO NOT enclose in single or double quotes
+    #
+    local isNumRegEx="^[0-9]+$"
     ## Validate that $1 is not null and is a number and is > 4 (an oldschool minimum password length)
-    if [[ ! -z "${1}" ]] && [[ "${1}" =~ '^[0-9]+$' ]] && [ "${1}" -gt 4 ]; then
+    if [[ ! -z "${1}" ]] && [[ "${1}" =~ ${isNumRegEx} ]] && [ "${1}" -gt 4 ]; then
         minLength=${1}
     fi
 
@@ -91,14 +95,14 @@ function randPass
     #
     ## Validate that $2 is not null and is a number and is > 4 (an oldschool minimum password length)
     #
-    if [[ ! -z "${2}" ]] && [[ "${2}" =~ '^[0-9]+$' ]] && [ "${2}" -gt 4 ]; then
+    if [[ ! -z "${2}" ]] && [[ "${2}" =~ ${isNumRegEx} ]] && [ "${2}" -gt 4 ]; then
         maxLength=${2}
     fi
 
     #
     ## Ensuring that minlength isn't > maxLength - if it is then reverse them
     ##   * DO NOT TRY TO PUT THIS ABOVE, INTO THE VALUE VALIDATIONS... IF ANY VALUE VALIDATION FAILS THEN EITHER MIN OR MAX LENGTH MAY BE DEFAULTED
-    ##     THIS METHOD ABSOLUTELY ENSURES THAT randPass WILL ALWAYS RETURN A LEGITIMATELY RANDOM-LENGTH AND RANDOM-CHARS PASSWORD, EVEN IF IT THROWS OUT INVALID PARAMETERS
+    ##     THIS METHOD ABSOLUTELY ENSURES THAT getRandPass WILL ALWAYS RETURN A LEGITIMATELY RANDOM-LENGTH AND RANDOM-CHARS PASSWORD, EVEN IF IT THROWS OUT INVALID PARAMETERS
     #
     if [ "${minLength}" -gt "${maxLength}" ]; then
         local -i minBak=${minLength}
@@ -127,7 +131,7 @@ declare mysqlRootPass="mysqlRoot"
 #
 # Comment out the next line if you want a simplified mysqlRoot password - both this and the initial/simple value above may be overridden with the CLI arguments
 #
-mysqlRootPass=$(randPass 12 16)
+mysqlRootPass=$(getRandPass 12 16)
 
 #
 # The muDBSchema value will be injected into SQL queries at runtime to create a database schema for your MU
@@ -160,7 +164,7 @@ declare muDBPass="muDBPass"
 #
 # Comment out the next line if you want a simplified muDBUser password - both this and the initial/simple value above may be overridden with the CLI arguments
 #
-muDBPass=$(randPass 12 16)
+muDBPass=$(getRandPass 12 16)
 
 #
 # The mediaWikiPass value will be injected into the MediaWiki installation at runtime.
@@ -174,7 +178,7 @@ declare mediaWikiPass="mwikiRoot"
 #
 # Comment out the next line if you want a simplified Media Wiki Admin password - both this and the initial/simple value above may be overridden with the CLI arguments
 #
-mediaWikiPass=$(randPass 12 16)
+mediaWikiPass=$(getRandPass 12 16)
 #
 # Process the CLI Parameters
 #
@@ -406,7 +410,7 @@ declare mediaWikiURL="https://releases.wikimedia.org/mediawiki/1.30/mediawiki-1.
 #
 # The path to the local directory you intend to serve your MediaWiki site/content from
 #
-declare localWebSiteDir="/var/www/html/mediawiki"
+declare localWebSiteDir="/var/www/html/wiki"
 if [[ ! -d "${localWebSiteDir}" ]]; then
     mkdir -p "${localWebSiteDir}"
     #
@@ -431,9 +435,9 @@ sudo chown www-data:www-data -R ${localWebSiteDir}
 #
 doMySQLQuery "SET GLOBAL sql_mode=''"
 doMySQLQuery "CREATE DATABASE IF NOT EXISTS wikidb;"
-doMySQLQuery "DROP USER IF EXISTS 'wikiuser'@'localhost';"
-doMySQLQuery "CREATE USER IF NOT EXISTS 'wikiuser'@'localhost' IDENTIFIED BY '${mediaWikiPass}';"
-doMySQLQuery "GRANT ALL PRIVILEGES ON wikidb.* TO 'wikiuser'@'localhost';"
+doMySQLQuery "DROP USER IF EXISTS 'wikiadmin'@'localhost';"
+doMySQLQuery "CREATE USER IF NOT EXISTS 'wikiadmin'@'localhost' IDENTIFIED BY '${mediaWikiPass}';"
+doMySQLQuery "GRANT ALL PRIVILEGES ON wikidb.* TO 'wikiadmin'@'localhost';"
 doMySQLQuery "FLUSH PRIVILEGES;"
 
 # restart apache2
@@ -494,5 +498,45 @@ echo -e "\033[1m    Your MU's DB Schema is:  ${muDBSchema}\033[0m"
 echo -e "\033[1m    Your MU's DB User is:  ${muDBUser}\033[0m"
 echo -e "\033[1m    Your MU's DB Password is:  ${muDBPass}\033[0m"
 echo ""
-echo -e "\033[1m    Your MediaWiki username is wikiuser and the MediaWiki password is:  ${mediaWikiPass}\033[0m"
+echo -e "\033[1m    Your MediaWiki DB Schema is wikidb\033[0m"
+echo -e "\033[1m    Your MediaWiki User is wikiadmin\033[0m"
+echo -e "\033[1m    Your MediaWiki Password is ${mediaWikiPass}\033[0m'"
 echo ""
+
+#
+# We do this LAST because it might disconnect SSH connections
+#
+# probably not needed in Ubuntu, but maybe debian and other flavors
+#   * iptables is your firewall and ufw is "Uncomplicated Firewall" which is a simplification interface for iptables
+#
+sudo apt-get --assume-yes install iptables ufw
+
+#
+# Set up to deny all incoming connections that aren't explicitly allowed
+#
+sudo ufw default deny incoming
+#
+# Set up to allow all outgoing traffic
+#
+sudo ufw default allow outgoing
+
+#
+# Explicitly allow SSH
+#
+sudo ufw allow 22/tcp
+#
+# Allow HTTP and HTTPS
+#
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+#
+# You can also specify a specific port that the IP address is allowed to connect to by adding to any port followed by the port 
+# number. For example, If you want to allow 15.15.15.51 to connect to port 22 (SSH), use this command:
+#
+# sudo ufw allow from 15.15.15.51 to any port 22
+#
+
+sudo ufw start
+
+sudo ufw enable
