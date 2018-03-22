@@ -243,7 +243,7 @@ fi
 sudo apt-get --assume-yes update
 sudo apt-get --assume-yes upgrade
 # if you don't have these by default, WTF?!
-sudo apt-get --assume-yes install build-essential libc6-dev lib32gcc1 lib32stdc++6 
+sudo apt-get --assume-yes install build-essential libc6-dev lib32gcc1 lib32stdc++6
 #
 # the next round of installs are required for SteamCMD and some specific Steam games - they will probably be handy whether 
 # you plan to host Steam games from your server or not
@@ -252,7 +252,7 @@ sudo apt-get --assume-yes install libvorbisfile3
 #
 # these are not typically installed by default on debian, maybe on some flavors of ubuntu, but are always useful
 #
-sudo apt-get --assume-yes install net-tools debconf-utils whois dig nmap inetutils-traceroute unzip expect curl
+sudo apt-get --assume-yes install net-tools debconf-utils whois nmap inetutils-traceroute unzip expect curl
 #
 # if you're installing on a remote host and connected via SSH then, pretty obviously, you don't need the next line
 # so you can safely comment it out.  you actively WANT to comment it out if you're using an SSH server other than openSSH,
@@ -276,13 +276,14 @@ sudo apt-get --assume-yes install libpcre3 libpcre3-dev libevent-dev
 #   * both postfix and sendmail are SMTP which is for MAIL-SENDING ONLY
 #   * dovecot is for POP-3/IMAP which is for MAIL-RECEIVING
 #
-sudo apt-get --assume-yes install sendmail postfix postfix-mysql dovecot-core dovecot-imapd dovecot-lmtpd dovecot-mysql
+# sudo apt-get --assume-yes install sendmail-bin sendmail
+sudo apt-get --assume-yes install postfix postfix-mysql dovecot-core dovecot-imapd dovecot-lmtpd dovecot-mysql
     # When Postfix configuration is prompted choose Internet Site:
     # Postfix configuration will ask about System mail name – you could use your FDQN or main domain.
 #
 # You want python with these addons at a bare minimum
 #
-sudo apt-get --assume-yes install python python-pip virtualenv 
+sudo apt-get --assume-yes install python python-pip virtualenv
 #
 # Upgrade pip
 #
@@ -395,8 +396,11 @@ fi
 #
 doMySQLQuery "CREATE DATABASE IF NOT EXISTS ${muDBSchema};"
 doMySQLQuery "DROP USER IF EXISTS '${muDBUser}'@'localhost';"
+doMySQLQuery "DROP USER IF EXISTS '${muDBUser}'@'127.0.0.1';"
 doMySQLQuery "CREATE USER IF NOT EXISTS '${muDBUser}'@'localhost' IDENTIFIED BY '${muDBPass}';"
+doMySQLQuery "CREATE USER IF NOT EXISTS '${muDBUser}'@'127.0.0.1' IDENTIFIED BY '${muDBPass}';"
 doMySQLQuery "GRANT ALL PRIVILEGES ON `${muDBSchema}`.* TO '${muDBUser}'@'localhost';"
+doMySQLQuery "GRANT ALL PRIVILEGES ON `${muDBSchema}`.* TO '${muDBUser}'@'127.0.0.1';"
 doMySQLQuery "FLUSH PRIVILEGES;"
 
 #

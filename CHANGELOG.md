@@ -35,3 +35,9 @@
 * Added iptables/UFW install/configuration
 
 * Fixed problem with getRandPass function
+
+# 2018-03-22
+
+* Removed dig installation which was preventing other network tools installs such as whois
+
+* Moved sendmail to separate line and commented out (was preventing postfix installation)
