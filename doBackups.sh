@@ -65,7 +65,7 @@ for bt in "${backupTargets[@]}"; do
         touch "${archFile}"
         chmod 600 "${archFile}"
     fi
-    tar -zcf "${archFile}" "${bt}"
+    tar -zcpf "${archFile}" "${bt}"
     #
     # archComp is a compilation of all the archives for that particular directory, provided for a quick and easy offsite dump at a later time
     #
@@ -73,9 +73,10 @@ for bt in "${backupTargets[@]}"; do
     if [[ ! -f "${archComp}" ]]; then
         touch "${archComp}"
         chmod 600 "${archComp}"
-        tar -cf "${archComp}"
+        tar -cpf "${archComp}" "${archFile}"
+    else
+        tar -puf "${archComp}" "${archFile}"        
     fi
-    tar -uf "${archComp}" "${archFile}"    
 done
 
 tar -uf "${compilationFile}" "${backupDirectory}"
